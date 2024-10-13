@@ -10,7 +10,6 @@ setup(
     entry_points={
         "winzy.plugins": ["mail = checkmail.winzy_checkemail:mail_plugin"]
         },
-    python_requires=">=3.9",
     author="Sukhbinder Singh",
     url="https://github.com/sukhbinder/winzy-checkmail",
     classifiers=[
