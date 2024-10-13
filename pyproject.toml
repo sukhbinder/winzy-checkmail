@@ -10,6 +10,7 @@ classifiers = [
 ]
 dependencies = [
     "winzy",
+    "win32py",
 ]
 
 [project.urls]
