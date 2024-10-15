@@ -1,6 +1,6 @@
 [project]
 name = "winzy-checkmail"
-version = "0.1"
+version = "0.1.2"
 description = "Access outlook email using cli."
 readme = "README.md"
 authors = [{name = "Sukhbinder Singh"}]
