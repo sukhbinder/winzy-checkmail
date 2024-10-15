@@ -1,24 +1,29 @@
 import winzy
 import win32com.client
 
+FOLDERS = {
+    "inbox": 6,
+    "sent": 5,
+    "draft": 16
+}
 
-def get_last_subjects(count=10, with_body=False, ith=None):
+def get_last_subjects(count=10, with_body=False, ith=None, folder="inbox"):
     """
     Extracts the subjects of the last 'count' emails in Outlook.
 
     Args:
-    outlook_app (Optional[win32com.client.Dispatch]): Optionally provides a custom
+      outlook_app (Optional[win32com.client.Dispatch]): Optionally provides a custom
         Outlook application object. Otherwise, uses the default instance.
 
     Returns:
-    List[str]: List of last 'count' email subjects.
+      List[str]: List of last 'count' email subjects.
     """
 
-
+    
     outlook_app = win32com.client.Dispatch("Outlook.Application")
 
     namespace = outlook_app.GetNamespace("MAPI")
-    inbox = namespace.GetDefaultFolder(6)  # 6 refers to Inbox
+    inbox = namespace.GetDefaultFolder(FOLDERS[folder])  # 6 refers to Inbox # 5 refers to sent folder 16 drafts
     messages = inbox.Items
     subjects = []
 
@@ -46,47 +51,57 @@ def safe_join(subjects):
     except UnicodeEncodeError:
         # Try to encode and decode each subject to handle unsupported characters
         encoded_subjects = [s.encode('utf-8').decode('utf-8') for s in subjects]
-    return "\n".join(encoded_subjects)
+        return "\n".join(encoded_subjects)
+
+def create_parser(subparser):
+    hello_parser = subparser.add_parser("mail", description="Check outlook email from cli")
+    hello_parser.add_argument(
+    "-c",
+    "--count",
+    type=int,
+    default=10,
+    help="Extracts the subjects of the last 'count' emails in Outlook",
+    )
+
+    hello_parser.add_argument(
+        "-wb",
+        "--with-body",
+        action="store_true",
+        help="If given returns body text as well."
+    )
+    
+    hello_parser.add_argument(
+        "-ith",
+        "--ith",
+        type=int,
+        help="If given returns subject or/and body text of the last ith message"
+    )
+    
+
+    hello_parser.add_argument(
+                '-t', '--type',
+                help='Type of folder (inbox, sent, draft)',
+                choices=FOLDERS.keys(),
+                default='inbox'
+    )
+    return hello_parser
 
 class CheckEmail:
-    name = "mail"
+    __name__ = "mail"
     @winzy.hookimpl
     def register_commands(self, subparser):
-        hello_parser = subparser.add_parser("mail", description="Check outlook email from cli")
-        hello_parser.add_argument(
-        "-c",
-        "--count",
-        type=int,
-        default=10,
-        help="Extracts the subjects of the last 'count' emails in Outlook",
-        )
-
-        hello_parser.add_argument(
-            "-wb",
-            "--with-body",
-            action="store_true",
-            help="If given returns body text as well."
-        )
-        
-        hello_parser.add_argument(
-            "-ith",
-            "--ith",
-            type=int,
-            help="If given returns subject or/and body text of the last ith message"
-        )
-        
-
-        hello_parser.set_defaults(func=self.checkmail)
-
+        parser = create_parser(subparser) 
+        parser.set_defaults(func=self.checkmail)
+    
     def checkmail(self, args):
-        last_subjects = get_last_subjects(count=args.count, with_body=args.with_body, ith=args.ith)
+        last_subjects = get_last_subjects(count=args.count, with_body=args.with_body, ith=args.ith, folder=args.type )
 
         try:
             for i, subject in enumerate(last_subjects, 1):
                 print(i, subject)
         except Exception as ex:
             pass
-    
+
     def hello(self, args):
         # this routine will be called when "winzy "mail is called."
         print("Hello! This is an example ``winzy`` plugin.")
